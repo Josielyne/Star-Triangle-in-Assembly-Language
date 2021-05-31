@@ -1,0 +1,132 @@
+;Joselyne Guillen
+;CS M145
+
+;nasm 2.13.02
+
+section .data                    ;section to initialize variables
+
+    spaceTri: db ' '             ;initialize string variable for space of triangle
+
+    spaceTriLen:  equ $-spaceTri ;length of string
+    
+    star: db '*'                 ;initialize string variable for stars of triangle
+    
+    starLen:  equ $-star         ;length of string
+    
+    newline: db 10               ;establish new line
+    
+section .bss                     ;section to declare variables
+   
+    counter1 resb 1              ;declare 1 bit variable that will hold counter for outer loop
+    
+    counter2 resb 1              ;declare 1 bit variable that will hold counter for print space loop
+    
+    counter3 resb 1              ;declare 1 bit variable that will hold counter for print star loop
+    
+    triSize resb 1               ;declare 1 bit variable that will hold user input for triangle base size
+    
+    space resb 1                 ;declare 1 bit variable that will hold number of spaces
+    
+
+section .text              ;section that holds the code
+    global _start          ;shows where program starts
+
+_start:
+
+    mov eax,3              ;The system call for read 
+	mov ebx,0              ;file descriptor stdin
+	mov ecx,triSize        ;variable that holds user input
+	mov edx,1              ;size of variable
+	int 80h                ;call kernel and reads user input
+    
+    sub [triSize], byte '0' ;subtract 0 from variable to convert from ascii to decimal
+
+    mov al, [triSize]       ;move triSize into al register
+    mov bl, byte 2          ;move 2 into bl register
+    mul bl                  ;multiply al by bl
+    sub al, bl              ;subtract bl from al
+    mov [space], al         ;move result of operation to space variable
+                            ;this calculates the initial number of spaces we need
+    
+    mov [counter1], byte 0  ;initialize counter variables
+    mov [counter2], byte 0
+    mov [counter3], byte 0
+    
+   
+                
+
+LoopRows: ;label for loop for rows
+
+    mov [counter2], byte 0  ;restart counter variables
+    mov [counter3], byte -1 
+
+    mov al, [triSize]       ;move triSize into al register
+    cmp [counter1], al      ;compare value of counter1 to value of al register
+    je End                  ;if values are equal, jump to end of the program
+                            ;this signifies the end of the loop
+                            ;else the program continues
+    
+    call InLoop             ;program call for InLoop
+    
+    mov eax,4               ;the system call for write  
+	mov ebx,1               ;file descriptor stdout
+	mov ecx,newline         ;variable that holds newline
+	mov edx,1               ;length of what is to be displayed       
+	int 80h                 ;call the kernel and goes to a new line  
+    
+    
+    dec byte [space]        ;decrease space by 1
+    inc byte [counter1]     ;increase counter1 by 1
+    jmp LoopRows            ;jump to LoopRows to loop again
+    
+    
+InLoop: ;label for program InLoop
+    
+    call printSpace         ;program call for printSpace
+    call printStar          ;program call for printStar
+    ret                     ;return to place where program was called
+    
+
+printSpace: ;label for program printSpace
+  
+    mov eax,4               ;the system call for write     
+	mov ebx,1               ;file descriptor stdout
+	mov ecx,spaceTri        ;variable that holds a space
+	mov edx,spaceTriLen     ;length of what is to be displayed
+	int 80h                 ;call the kernel and display a space
+   
+    inc byte [counter2]     ;increase counter2 by 1
+    
+    mov al, [space]         ;move space into al register
+    cmp [counter2], al      ;compare value of counter2 to value of al register
+    jl printSpace           ;if value of counter2 is less than value of al register, jump to printSpace label to loop again
+    
+    ret                     ;return to place where program was called
+
+printStar:  ;label for program printStar
+  
+    mov eax,4               ;the system call for write        
+	mov ebx,1               ;file descriptor stdout        
+	mov ecx,star            ;variable that holds a star
+	mov edx,starLen         ;length of what is to be displayed     
+	int 80h                 ;call the kernel and display a star
+	
+	mov eax,4               ;the system call for write     
+	mov ebx,1               ;file descriptor stdout 
+	mov ecx,spaceTri        ;variable that holds a space
+	mov edx,spaceTriLen     ;length of what is to be displayed        
+	int 80h                 ;call the kernel and display a space
+	
+	inc byte [counter3]     ;increase counter3 by 1
+	
+    mov al, [counter1]      ;move counter1 to al register
+    cmp [counter3], al      ;compare value of counter3 to value of al register
+    jl printStar            ;if value of counter3 is less than value of al register, jump to printStar label to loop again
+
+    ret                     ;return to place where program was called
+    
+    
+End: ;label under which the program ends
+    mov eax,1            ; The system call for exit (sys_exit)
+	mov ebx,0            ; Exit with return code of 0 (no error)
+	int 80h;
